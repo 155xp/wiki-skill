@@ -56,10 +56,19 @@ infobox:
   - "Related: neighbouring techniques"
 tags: [llm-inference]
 created: 2026-10-28
+visibility: private   # private (default) or public; public only when the owner says so
 ---
 ```
 
 Infobox rows are `"Label: value"` strings (quote them, since the value may contain a colon). Keep values plain text: Obsidian shows frontmatter as properties and does not render Markdown inside them (the renderer would, but the note should read cleanly in both). Keep it to four to eight rows of hard facts; the infobox is a summary card, not a second lead. A YAML map (`Label: value` pairs) also works, and `infobox_caption` overrides the caption, which defaults to the title.
+
+## Publishing
+
+Articles go to https://wiki.enci.dev. The `visibility` frontmatter field decides where the file lives:
+
+- **`visibility: public`** (only with the owner's explicit say-so): put it in `articles/<slug>.md` of https://github.com/155xp/wiki and push to `main`, or run `./publish.sh <file.md>` from a clone. Check `curl -sI https://wiki.enci.dev/<slug>` returns 200.
+- **`visibility: private`, or the field missing** (the default for anything you write): never commit it to `155xp/wiki`; that repo is public. Run the same `./publish.sh <file.md>`; it sees the field and publishes to the private repo `155xp/wiki-private` instead, which syncs it to private storage. The page then exists at `https://wiki.enci.dev/<slug>` for the signed-in owner only; everyone else gets a 404, and it is left out of the index and sitemap.
+- The owner can flip any article public or private live with the toggle on the page, without a new commit. Don't change visibility on your own.
 
 ## Checklist before finishing
 
@@ -69,3 +78,4 @@ Infobox rows are `"Label: value"` strings (quote them, since the value may conta
 - Every factual claim that is not common knowledge has a footnote, and every footnote URL was opened.
 - The Glossary covers every bolded term.
 - `node renderer/render.js article.md > out.html` runs without errors, and the Contents numbering matches the headings.
+- `visibility` is set: `private` unless the owner said public.
