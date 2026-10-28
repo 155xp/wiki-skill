@@ -24,8 +24,7 @@ Reuses the first citation.[^a]
 
 ## Glossary
 
-**Term**
-: A definition kept as plain Markdown.
+- **Term**: a definition kept as plain Markdown.
 
 [^a]: Author, "First source", 2020. https://example.org/first
 [^b]: Author, "Second source", 2021. https://example.org/second

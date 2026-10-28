@@ -1,0 +1,3 @@
+/* Placeholder until the template pass; replaced by the real stylesheet. */
+:root { color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
