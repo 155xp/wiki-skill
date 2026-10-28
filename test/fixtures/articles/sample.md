@@ -18,6 +18,9 @@ Body text with a second citation.[^b]
 
 More text.
 
+
+![Two boxes](figures/tiny.svg "A tiny figure caption")
+
 ## Second section
 
 Reuses the first citation.[^a]

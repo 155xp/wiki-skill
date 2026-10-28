@@ -99,3 +99,12 @@ test('CLI renders a file to stdout', () => {
   assert.match(out, /^<!doctype html>/i);
   assert.match(out, /class="wikilink" href="\/existing-article"/);
 });
+
+test('a standalone local .svg image becomes an inline figure with its caption', () => {
+  const fig = html.match(/<figure class="figure">[\s\S]*?<\/figure>/);
+  assert.ok(fig, 'figure exists');
+  assert.match(fig[0], /<svg[^>]*viewBox="0 0 10 10"/);
+  assert.match(fig[0], /<figcaption>A tiny figure caption<\/figcaption>/);
+  assert.doesNotMatch(fig[0], /<script|<\?xml|<img/);
+  assert.doesNotMatch(html, /<p>\s*<figure/);
+});

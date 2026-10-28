@@ -20,6 +20,8 @@ created: 2026-10-28
 
 Generating one token from a [[Transformer]] requires reading every weight of the model from accelerator memory. At batch size 1 the arithmetic per byte read is small, so the step time is set by memory bandwidth rather than compute. Feeding the model several candidate tokens in the same step reuses the same weight reads, and the extra positions are almost free until the batch becomes large enough to be compute bound.[^chen][^medusa] Speculative decoding spends that spare compute on guesses.
 
+![One speculative decoding step](figures/draft-and-verify.svg "One step with four drafted tokens. The first two match the target and are kept; the third is rejected and replaced by a token sampled from the residual distribution; the fourth is discarded because it followed a rejection.")
+
 If a guess is right, the model has produced several tokens for the price of one step. If it is wrong, the target model's own computation at the first rejected position still yields a correct token, so no step is wasted entirely.
 
 ## The verification rule

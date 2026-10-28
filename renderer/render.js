@@ -113,6 +113,34 @@ function numberedHeadings(md) {
   });
 }
 
+// A paragraph holding only ![alt](local.svg "caption") becomes <figure> with the SVG inlined,
+// so the page stays self-contained while the note keeps a plain image link.
+function inlineFigures(md, baseDir) {
+  md.core.ruler.push('inline_figures', (state) => {
+    const t = state.tokens;
+    for (let i = 0; i + 2 < t.length; i++) {
+      if (t[i].type !== 'paragraph_open' || t[i + 2].type !== 'paragraph_close') continue;
+      const kids = t[i + 1].children || [];
+      if (kids.length !== 1 || kids[0].type !== 'image') continue;
+      const img = kids[0];
+      const src = img.attrGet('src') || '';
+      if (!baseDir || !/\.svg$/i.test(src) || /^[a-z]+:|^\//i.test(src)) continue;
+      const file = path.resolve(baseDir, decodeURI(src));
+      if (!file.startsWith(path.resolve(baseDir) + path.sep) || !fs.existsSync(file)) continue;
+      const svg = fs.readFileSync(file, 'utf8')
+        .replace(/<\?xml[^>]*>\s*/g, '')
+        .replace(/<!DOCTYPE[^>]*>\s*/gi, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/\son[a-z]+="[^"]*"/gi, '')
+        .trim();
+      const caption = img.attrGet('title') || img.content;
+      const tok = new state.Token('html_block', '', 0);
+      tok.content = `<figure class="figure">\n${svg}\n${caption ? `<figcaption>${md.renderInline(caption, {})}</figcaption>\n` : ''}</figure>\n`;
+      t.splice(i, 3, tok);
+    }
+  });
+}
+
 function referencesRules(md) {
   const r = md.renderer.rules;
   r.footnote_ref = (tokens, idx) => {
@@ -165,6 +193,7 @@ function renderArticle(source, opts = {}) {
   wikilinks(md, known);
   numberedHeadings(md);
   referencesRules(md);
+  inlineFigures(md, opts.baseDir || opts.articlesDir);
 
   const env = {};
   const tokens = md.parse(content, env);
@@ -246,5 +275,5 @@ if (require.main === module) {
   }
   const ai = args.indexOf('--articles');
   const articlesDir = ai >= 0 ? args[ai + 1] : path.dirname(path.resolve(file));
-  process.stdout.write(renderArticle(fs.readFileSync(file, 'utf8'), { articlesDir }));
+  process.stdout.write(renderArticle(fs.readFileSync(file, 'utf8'), { articlesDir, baseDir: path.dirname(path.resolve(file)) }));
 }

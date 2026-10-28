@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 196" width="640" height="196" role="img" aria-labelledby="t d" font-family="system-ui, sans-serif" font-size="14">
+  <title id="t">One speculative decoding step</title>
+  <desc id="d">The drafter proposes four tokens. The target model checks all four in one pass, accepts the first two, rejects the third and samples a replacement, and the fourth draft is discarded.</desc>
+  <text class="fig-label" x="0" y="40" fill="#9a9a9a">Drafter proposes</text>
+  <g class="fig-row">
+    <rect class="fig-box" x="150" y="20" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="198" y="41" text-anchor="middle" fill="#ededed">the</text>
+    <rect class="fig-box" x="256" y="20" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="304" y="41" text-anchor="middle" fill="#ededed">cat</text>
+    <rect class="fig-box" x="362" y="20" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="410" y="41" text-anchor="middle" fill="#ededed">sat</text>
+    <rect class="fig-box" x="468" y="20" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="516" y="41" text-anchor="middle" fill="#ededed">on</text>
+  </g>
+  <text class="fig-label" x="0" y="106" fill="#9a9a9a">Target checks</text>
+  <g class="fig-row">
+    <rect class="fig-accept" x="150" y="86" width="96" height="32" rx="4" fill="none" stroke="#4dbc9b" stroke-width="1.5"/>
+    <text class="fig-text" x="198" y="107" text-anchor="middle" fill="#ededed">accept</text>
+    <rect class="fig-accept" x="256" y="86" width="96" height="32" rx="4" fill="none" stroke="#4dbc9b" stroke-width="1.5"/>
+    <text class="fig-text" x="304" y="107" text-anchor="middle" fill="#ededed">accept</text>
+    <rect class="fig-reject" x="362" y="86" width="96" height="32" rx="4" fill="none" stroke="#f98473" stroke-width="1.5"/>
+    <text class="fig-text" x="410" y="107" text-anchor="middle" fill="#ededed">reject</text>
+    <rect class="fig-box" x="468" y="86" width="96" height="32" rx="4" fill="none" stroke="#303030" stroke-dasharray="4 3"/>
+    <text class="fig-muted" x="516" y="107" text-anchor="middle" fill="#9a9a9a">discarded</text>
+  </g>
+  <text class="fig-label" x="0" y="172" fill="#9a9a9a">Output</text>
+  <g class="fig-row">
+    <rect class="fig-box" x="150" y="152" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="198" y="173" text-anchor="middle" fill="#ededed">the</text>
+    <rect class="fig-box" x="256" y="152" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="304" y="173" text-anchor="middle" fill="#ededed">cat</text>
+    <rect class="fig-box" x="362" y="152" width="96" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="410" y="173" text-anchor="middle" fill="#ededed">lay</text>
+  </g>
+  <text class="fig-muted" x="472" y="173" fill="#9a9a9a">3 tokens, 1 target pass</text>
+</svg>
