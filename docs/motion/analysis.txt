@@ -1,0 +1,34 @@
+[(0, 105), (167, 19), (982, 4), (1038, 19), (1853, 38)]
+frames 1891 calibration black runs start at frames [np.int64(167), np.int64(1038)]
+no-preference link-hover  link region                  +0ms..+150ms (10 frames), +600ms..+600ms (1 frames)
+no-preference link-leave  link region                  +0ms..+150ms (10 frames)
+no-preference pop-hover   popover area below marker    +700ms..+817ms (8 frames), +1617ms..+1767ms (10 frames)
+no-preference pop-leave   popover area below marker    +117ms..+317ms (13 frames), +1167ms..+1383ms (14 frames)
+no-preference pop-peer    popover area below marker    +-17ms..+0ms (2 frames), +1133ms..+1233ms (7 frames)
+no-preference pop-leave2  popover area below marker    +117ms..+217ms (7 frames), +1267ms..+1267ms (1 frames)
+no-preference toc-jump    whole screen                 +-17ms..+500ms (32 frames), +550ms..+550ms (1 frames)
+   changed-pixel share of the first frames: ['0.000', '0.376', '0.028', '0.028', '0.004', '0.028']
+no-preference fn-jump     whole screen                 +0ms..+517ms (32 frames), +567ms..+567ms (1 frames)
+   changed-pixel share of the first frames: ['0.000', '0.408', '0.031', '0.031', '0.009', '0.031']
+no-preference back-jump   whole screen                 +0ms..+517ms (32 frames), +567ms..+567ms (1 frames)
+   changed-pixel share of the first frames: ['0.001', '0.230', '0.001', '0.000', '0.000', '0.001']
+no-preference tab         whole screen                 +0ms..+0ms (1 frames)
+no-preference tab         whole screen                 +0ms..+0ms (1 frames)
+no-preference tab         whole screen                 +0ms..+0ms (1 frames)
+no-preference tab         whole screen                 +0ms..+0ms (1 frames)
+reduce        link-hover  link region                  +0ms..+0ms (1 frames), +600ms..+600ms (1 frames)
+reduce        link-leave  link region                  +0ms..+0ms (1 frames), +600ms..+600ms (1 frames)
+reduce        pop-hover   popover area below marker    +717ms..+833ms (8 frames), +1633ms..+1667ms (3 frames)
+reduce        pop-leave   popover area below marker    +117ms..+150ms (3 frames), +1167ms..+1167ms (1 frames), +1283ms..+1367ms (6 frames)
+reduce        pop-peer    popover area below marker    +-33ms..+0ms (3 frames), +1133ms..+1217ms (6 frames)
+reduce        pop-leave2  popover area below marker    +133ms..+217ms (6 frames), +1283ms..+1283ms (1 frames)
+reduce        toc-jump    whole screen                 +0ms..+517ms (32 frames), +567ms..+567ms (1 frames)
+   changed-pixel share of the first frames: ['0.000', '0.376', '0.028', '0.028', '0.004', '0.028']
+reduce        fn-jump     whole screen                 +0ms..+517ms (32 frames), +567ms..+567ms (1 frames)
+   changed-pixel share of the first frames: ['0.000', '0.408', '0.031', '0.031', '0.009', '0.031']
+reduce        back-jump   whole screen                 +-17ms..+517ms (33 frames), +567ms..+567ms (1 frames)
+   changed-pixel share of the first frames: ['0.000', '0.230', '0.000', '0.001', '0.000', '0.000']
+reduce        tab         whole screen                 +0ms..+0ms (1 frames)
+reduce        tab         whole screen                 +0ms..+0ms (1 frames)
+reduce        tab         whole screen                 +0ms..+0ms (1 frames)
+reduce        tab         whole screen                 +0ms..+0ms (1 frames)

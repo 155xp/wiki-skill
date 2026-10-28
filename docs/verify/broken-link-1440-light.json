@@ -1,0 +1,21 @@
+{
+  "title": "Broken link",
+  "mode": "explainer",
+  "background": "rgb(251, 250, 249)",
+  "overflowX": 0,
+  "sections": [
+    "Contents",
+    "Section",
+    "See also"
+  ],
+  "tocEntries": 2,
+  "wikilinks": [
+    "/full",
+    "/full",
+    "/full#worked-examples",
+    "/full"
+  ],
+  "missingLinkElements": 0,
+  "footnoteMarkers": 0,
+  "rendererWarnings": ""
+}

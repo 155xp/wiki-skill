@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416 196" width="520" height="245" role="img" aria-labelledby="lt ld" font-family="system-ui, sans-serif" font-size="14">
+  <title id="lt">The speculative decoding loop</title>
+  <desc id="ld">Four stages repeat. The drafter proposes k tokens. The target scores all of them in one pass. The longest accepted prefix of drafts is kept. The target adds one token of its own, and the loop starts again from the longer text.</desc>
+  <defs>
+    <marker id="la" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L8 4 L0 8 z" fill="#9a9a9a"/>
+    </marker>
+  </defs>
+  <rect class="fig-box" x="0.75" y="20.75" width="160" height="48" rx="4" fill="#1c1c1c" stroke="#303030"/>
+  <text class="fig-text" x="80.75" y="41" text-anchor="middle" fill="#ededed">1. Drafter proposes</text>
+  <text class="fig-muted" x="80.75" y="59" text-anchor="middle" fill="#9a9a9a">k cheap guesses</text>
+  <rect class="fig-box" x="255.25" y="20.75" width="160" height="48" rx="4" fill="#1c1c1c" stroke="#303030"/>
+  <text class="fig-text" x="335.25" y="41" text-anchor="middle" fill="#ededed">2. Target scores</text>
+  <text class="fig-muted" x="335.25" y="59" text-anchor="middle" fill="#9a9a9a">all k in one pass</text>
+  <rect class="fig-box" x="255.25" y="126.75" width="160" height="48" rx="4" fill="#1c1c1c" stroke="#303030"/>
+  <text class="fig-text" x="335.25" y="147" text-anchor="middle" fill="#ededed">3. Keep the agreeing</text>
+  <text class="fig-muted" x="335.25" y="165" text-anchor="middle" fill="#9a9a9a">prefix of drafts</text>
+  <rect class="fig-box" x="0.75" y="126.75" width="160" height="48" rx="4" fill="#1c1c1c" stroke="#303030"/>
+  <text class="fig-text" x="80.75" y="147" text-anchor="middle" fill="#ededed">4. Target adds</text>
+  <text class="fig-muted" x="80.75" y="165" text-anchor="middle" fill="#9a9a9a">one token itself</text>
+  <g fill="none" stroke="#9a9a9a" stroke-width="1.25" marker-end="url(#la)">
+    <path class="fig-line" d="M164 44.75 H251"/>
+    <path class="fig-line" d="M335.25 72 V123"/>
+    <path class="fig-line" d="M252 150.75 H165"/>
+    <path class="fig-line" d="M80.75 123 V72"/>
+  </g>
+  <text class="fig-label" x="208" y="100" text-anchor="middle" fill="#9a9a9a">repeat until done</text>
+</svg>
