@@ -11,6 +11,7 @@ The Markdown note is the source of truth. It opens cleanly in Obsidian or any Ma
 - `examples/speculative-decoding.md`: a complete example article; `docs/speculative-decoding.html` is its rendered page.
 - `docs/reference-notes.md`: measurements of the reference design (type, colours, layout).
 - `docs/screenshots/`: rendered pages at 1440 and 390 px in light and dark, compared side by side with the reference.
+- `scripts/screenshots.js`: regenerates the screenshots with Playwright (`node scripts/screenshots.js`).
 - `test/`: renderer tests (`npm test`).
 
 ## Use
@@ -59,6 +60,7 @@ tags: [llm-inference]
 | `[^label]` footnotes | Bracketed citations and a numbered References section with back links |
 | `[[Page]]`, `[[Page\|text]]` | Links to `/page`; pages that do not exist yet get a distinct missing style |
 | A paragraph with only a local `.svg` image | Inline SVG figure with the image title as caption |
+| Tables | Bordered tables; below 40em each row stacks with its column headers as labels |
 | `## Glossary` list | Rendered as ordinary Markdown |
 
 The output is a single HTML file with inline CSS and no external requests.

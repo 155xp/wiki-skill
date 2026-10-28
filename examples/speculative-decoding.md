@@ -3,7 +3,7 @@ title: Speculative decoding
 slug: speculative-decoding
 note: "A working article on speculative decoding for large language model inference. Written 2026-10-28; every source linked below was checked to resolve that day. Figures quoted from papers are the papers' own measurements."
 infobox:
-  - "What: A small **drafter** proposes several tokens; the large **target** model checks all of them in one forward pass"
+  - "What: A small drafter proposes several tokens; the large target model checks all of them in one forward pass"
   - "Guarantee: Lossless: the output has exactly the target model's distribution"
   - "Why it pays: Single-sequence decoding is memory-bandwidth bound, so scoring a few extra positions costs little more than scoring one"
   - "Reported speedups: 2x to 3x on T5-XXL; 2x to 2.5x on Chinchilla 70B"

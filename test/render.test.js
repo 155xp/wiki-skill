@@ -108,3 +108,9 @@ test('a standalone local .svg image becomes an inline figure with its caption', 
   assert.doesNotMatch(fig[0], /<script|<\?xml|<img/);
   assert.doesNotMatch(html, /<p>\s*<figure/);
 });
+
+test('table cells carry their column header as data-label for narrow layouts', () => {
+  const t = renderArticle('Lead.\n\n## S\n\n| Name | Value |\n|---|---|\n| a | **1** |\n', { known: new Set() });
+  assert.match(t, /<td data-label="Name">a<\/td>/);
+  assert.match(t, /<td data-label="Value"><strong>1<\/strong><\/td>/);
+});

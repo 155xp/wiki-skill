@@ -59,7 +59,7 @@ created: 2026-10-28
 ---
 ```
 
-Infobox rows are `"Label: value"` strings (quote them, since the value may contain a colon). Values may use inline Markdown such as `**bold**`. Keep it to four to eight rows of hard facts; the infobox is a summary card, not a second lead. A YAML map (`Label: value` pairs) also works, and `infobox_caption` overrides the caption, which defaults to the title.
+Infobox rows are `"Label: value"` strings (quote them, since the value may contain a colon). Keep values plain text: Obsidian shows frontmatter as properties and does not render Markdown inside them (the renderer would, but the note should read cleanly in both). Keep it to four to eight rows of hard facts; the infobox is a summary card, not a second lead. A YAML map (`Label: value` pairs) also works, and `infobox_caption` overrides the caption, which defaults to the title.
 
 ## Checklist before finishing
 

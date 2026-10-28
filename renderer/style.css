@@ -1,3 +1,508 @@
-/* Placeholder until the template pass; replaced by the real stylesheet. */
-:root { color-scheme: light dark; }
-@media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
+/* Wikipedia-style working article. Light by default, dark under prefers-color-scheme. */
+
+:root {
+  color-scheme: light;
+  --page: #ffffff;
+  --surface: #f6f6f6;
+  --border: #d4d4d4;
+  --text: #1a1a1a;
+  --title: #111111;
+  --muted: #5f5f5f;
+  --link: #1a56c4;
+  --missing: #a5473b;
+  --accept: #13795b;
+  --reject: #c53d2d;
+
+  --serif: "Linux Libertine", "Georgia", "Times", "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #161616;
+    --surface: #1c1c1c;
+    --border: #303030;
+    --text: #ededed;
+    --title: #e1e1e1;
+    --muted: #9a9a9a;
+    --link: #8ab4f8;
+    --missing: #d49a90;
+    --accept: #4dbc9b;
+    --reject: #f98473;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Type scales with the viewport between 17px and 20px so proportions match the reference. */
+
+html {
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: clamp(17px, 1.39vw, 20px);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  padding: 2rem max(20px, 3vw) 4rem 13vw;
+}
+
+.article {
+  max-width: 62rem;
+}
+
+/* Links */
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a {
+    transition: color 160ms ease-out;
+  }
+}
+
+a.wikilink.missing {
+  color: var(--missing);
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a.wikilink.missing:hover {
+  text-decoration-style: solid;
+}
+
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--page), 0 0 0 4px var(--link);
+}
+
+/* Header */
+
+.article-header {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--border);
+  color: var(--title);
+  font-family: var(--serif);
+  font-size: 2.2rem;
+  font-weight: normal;
+  line-height: 1.25;
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+/* Lead, infobox and contents */
+
+.lead-block {
+  display: flow-root;
+  margin-bottom: 0.5rem;
+}
+
+.infobox {
+  float: right;
+  width: 20rem;
+  margin: 0 0 1rem 1.6rem;
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  line-height: 1.5;
+}
+
+.infobox caption {
+  padding: 0 0.5rem 0.45rem;
+  color: var(--title);
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.infobox th,
+.infobox td {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-width: 1px 0;
+  background: var(--surface);
+  text-align: left;
+  vertical-align: top;
+}
+
+.infobox th {
+  width: 35%;
+  font-weight: bold;
+}
+
+.lead > p:first-child {
+  margin-top: 0;
+}
+
+/* Contents: top-level entries only, numbers right-aligned in body colour. */
+
+.toc {
+  display: flow-root;
+  width: fit-content;
+  max-width: 100%;
+  margin: 1.25rem 0 0.5rem;
+  padding: 0.5rem 1.4rem 0.7rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  line-height: 1.75;
+}
+
+.toc .toc-title {
+  margin: 0 0 0.2rem;
+  padding: 0;
+  border: 0;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.75;
+  text-align: center;
+}
+
+.article nav.toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article .toc ol ol {
+  display: none;
+}
+
+.article .toc li + li {
+  margin-top: 0;
+}
+
+.toc a {
+  display: inline-flex;
+  gap: 0.4em;
+  max-width: 100%;
+}
+
+.toc a:hover {
+  text-decoration: none;
+}
+
+.toc a:hover .toc-text {
+  text-decoration: underline;
+}
+
+.toc-num {
+  flex: none;
+  min-width: 1.5em;
+  color: var(--text);
+  text-align: right;
+}
+
+.toc-num::after {
+  content: ".";
+}
+
+/* Section headings */
+
+h2,
+h3 {
+  scroll-margin-top: 1rem;
+}
+
+.article > h2,
+.references > h2 {
+  margin: 1.5em 0 0.6em;
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--border);
+  color: var(--title);
+  font-family: var(--serif);
+  font-size: 1.65rem;
+  font-weight: normal;
+  line-height: 1.3;
+}
+
+.article > h2 .sec-num::after,
+.references > h2 .sec-num::after {
+  content: ".";
+}
+
+.article > h3 {
+  margin: 1.3em 0 0.4em;
+  color: var(--title);
+  font-size: 1.15rem;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Body text */
+
+p {
+  margin: 0 0 0.9em;
+}
+
+.article ul,
+.article ol:not(.reference-list) {
+  margin: 0 0 1em;
+  padding-left: 1.6em;
+}
+
+.article li + li {
+  margin-top: 0.25em;
+}
+
+sup.cite {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+/* Tables */
+
+.article table:not(.infobox) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1em 0 1.2em;
+  border-collapse: collapse;
+  line-height: 1.5;
+}
+
+.article table:not(.infobox) th,
+.article table:not(.infobox) td {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.article table:not(.infobox) thead th {
+  background: var(--surface);
+  font-weight: bold;
+}
+
+/* Code */
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+:not(pre) > code {
+  padding: 0.05em 0.3em;
+  background: var(--surface);
+}
+
+pre {
+  overflow-x: auto;
+  margin: 1em 0 1.2em;
+  padding: 0.7rem 1rem;
+  border-left: 3px solid var(--border);
+  background: var(--surface);
+  line-height: 1.55;
+}
+
+/* Figures: the inlined SVG carries dark presentation attributes; CSS overrides them per theme. */
+
+/* The figure shrinks to the SVG's intrinsic width; the caption wraps to that width
+   (width: 0 keeps it out of the shrink-to-fit calculation). */
+
+.figure {
+  width: fit-content;
+  max-width: 100%;
+  margin: 1.4em 0;
+}
+
+.figure svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  font-family: var(--sans);
+}
+
+.figure .fig-box {
+  stroke: var(--border);
+}
+
+.figure .fig-box:not([fill="none"]) {
+  fill: var(--surface);
+}
+
+.figure .fig-accept {
+  stroke: var(--accept);
+}
+
+.figure .fig-reject {
+  stroke: var(--reject);
+}
+
+.figure .fig-text {
+  fill: var(--text);
+}
+
+.figure .fig-muted,
+.figure .fig-label {
+  fill: var(--muted);
+}
+
+.figure figcaption {
+  width: 0;
+  min-width: 100%;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* References */
+
+.reference-list {
+  margin: 0;
+  padding-left: 2em;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.reference-list li {
+  scroll-margin-top: 1rem;
+}
+
+.reference-list li + li {
+  margin-top: 0.3em;
+}
+
+.reference-list p {
+  margin: 0;
+}
+
+.backref-caret {
+  color: var(--muted);
+}
+
+/* Narrow screens: infobox stacks above the lead at full width. */
+
+@media (max-width: 860px) {
+  .infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 1.25rem;
+  }
+}
+
+@media (max-width: 760px) {
+  main {
+    padding: 1.5rem 16px 3rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .article > h2,
+  .references > h2 {
+    font-size: 1.45rem;
+  }
+}
+
+/* Narrow screens: code wraps and tables stack into labelled rows, so nothing scrolls sideways. */
+
+@media (max-width: 40em) {
+  pre {
+    overflow-x: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .article table:not(.infobox),
+  .article table:not(.infobox) tbody,
+  .article table:not(.infobox) tr {
+    display: block;
+    width: auto;
+    overflow: visible;
+  }
+
+  .article table:not(.infobox) {
+    border-top: 1px solid var(--border);
+  }
+
+  .article table:not(.infobox) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .article table:not(.infobox) tr {
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Label sits in a left column; a block (not grid) keeps text and citations in one flow. */
+  .article table:not(.infobox) td {
+    display: block;
+    position: relative;
+    min-height: 1.7rem;
+    padding: 0.15rem 0 0.15rem calc(35% + 0.75rem);
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .article table:not(.infobox) td::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 0.15rem;
+    left: 0;
+    width: 35%;
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+}
+
+@media print {
+  main {
+    padding: 0;
+  }
+
+  a {
+    color: inherit;
+  }
+}

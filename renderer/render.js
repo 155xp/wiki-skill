@@ -141,6 +141,28 @@ function inlineFigures(md, baseDir) {
   });
 }
 
+// Copy each column header onto its body cells (data-label) so narrow screens can stack rows.
+function tableLabels(md) {
+  md.core.ruler.push('table_labels', (state) => {
+    let headers = [];
+    let col = 0;
+    let inHead = false;
+    const t = state.tokens;
+    for (let i = 0; i < t.length; i++) {
+      const tok = t[i];
+      if (tok.type === 'thead_open') { inHead = true; headers = []; }
+      else if (tok.type === 'thead_close') inHead = false;
+      else if (tok.type === 'tr_open') col = 0;
+      else if (tok.type === 'th_open' && inHead) {
+        headers.push((t[i + 1].children || []).filter((c) => c.type === 'text' || c.type === 'code_inline').map((c) => c.content).join(''));
+      } else if (tok.type === 'td_open') {
+        if (headers[col]) tok.attrSet('data-label', headers[col]);
+        col += 1;
+      }
+    }
+  });
+}
+
 function referencesRules(md) {
   const r = md.renderer.rules;
   r.footnote_ref = (tokens, idx) => {
@@ -193,6 +215,7 @@ function renderArticle(source, opts = {}) {
   wikilinks(md, known);
   numberedHeadings(md);
   referencesRules(md);
+  tableLabels(md);
   inlineFigures(md, opts.baseDir || opts.articlesDir);
 
   const env = {};

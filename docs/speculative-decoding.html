@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="A working article on speculative decoding for large language model inference. Written 2026-10-28; every source linked below was checked to resolve that day. Figures quoted from papers are the papers' own measurements.">
+<title>Speculative decoding</title>
+<style>
+/* Wikipedia-style working article. Light by default, dark under prefers-color-scheme. */
+
+:root {
+  color-scheme: light;
+  --page: #ffffff;
+  --surface: #f6f6f6;
+  --border: #d4d4d4;
+  --text: #1a1a1a;
+  --title: #111111;
+  --muted: #5f5f5f;
+  --link: #1a56c4;
+  --missing: #a5473b;
+  --accept: #13795b;
+  --reject: #c53d2d;
+
+  --serif: "Linux Libertine", "Georgia", "Times", "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #161616;
+    --surface: #1c1c1c;
+    --border: #303030;
+    --text: #ededed;
+    --title: #e1e1e1;
+    --muted: #9a9a9a;
+    --link: #8ab4f8;
+    --missing: #d49a90;
+    --accept: #4dbc9b;
+    --reject: #f98473;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Type scales with the viewport between 17px and 20px so proportions match the reference. */
+
+html {
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: clamp(17px, 1.39vw, 20px);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  padding: 2rem max(20px, 3vw) 4rem 13vw;
+}
+
+.article {
+  max-width: 62rem;
+}
+
+/* Links */
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a {
+    transition: color 160ms ease-out;
+  }
+}
+
+a.wikilink.missing {
+  color: var(--missing);
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a.wikilink.missing:hover {
+  text-decoration-style: solid;
+}
+
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--page), 0 0 0 4px var(--link);
+}
+
+/* Header */
+
+.article-header {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--border);
+  color: var(--title);
+  font-family: var(--serif);
+  font-size: 2.2rem;
+  font-weight: normal;
+  line-height: 1.25;
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+/* Lead, infobox and contents */
+
+.lead-block {
+  display: flow-root;
+  margin-bottom: 0.5rem;
+}
+
+.infobox {
+  float: right;
+  width: 20rem;
+  margin: 0 0 1rem 1.6rem;
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+  line-height: 1.5;
+}
+
+.infobox caption {
+  padding: 0 0.5rem 0.45rem;
+  color: var(--title);
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.infobox th,
+.infobox td {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-width: 1px 0;
+  background: var(--surface);
+  text-align: left;
+  vertical-align: top;
+}
+
+.infobox th {
+  width: 35%;
+  font-weight: bold;
+}
+
+.lead > p:first-child {
+  margin-top: 0;
+}
+
+/* Contents: top-level entries only, numbers right-aligned in body colour. */
+
+.toc {
+  display: flow-root;
+  width: fit-content;
+  max-width: 100%;
+  margin: 1.25rem 0 0.5rem;
+  padding: 0.5rem 1.4rem 0.7rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  line-height: 1.75;
+}
+
+.toc .toc-title {
+  margin: 0 0 0.2rem;
+  padding: 0;
+  border: 0;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.75;
+  text-align: center;
+}
+
+.article nav.toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article .toc ol ol {
+  display: none;
+}
+
+.article .toc li + li {
+  margin-top: 0;
+}
+
+.toc a {
+  display: inline-flex;
+  gap: 0.4em;
+  max-width: 100%;
+}
+
+.toc a:hover {
+  text-decoration: none;
+}
+
+.toc a:hover .toc-text {
+  text-decoration: underline;
+}
+
+.toc-num {
+  flex: none;
+  min-width: 1.5em;
+  color: var(--text);
+  text-align: right;
+}
+
+.toc-num::after {
+  content: ".";
+}
+
+/* Section headings */
+
+h2,
+h3 {
+  scroll-margin-top: 1rem;
+}
+
+.article > h2,
+.references > h2 {
+  margin: 1.5em 0 0.6em;
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--border);
+  color: var(--title);
+  font-family: var(--serif);
+  font-size: 1.65rem;
+  font-weight: normal;
+  line-height: 1.3;
+}
+
+.article > h2 .sec-num::after,
+.references > h2 .sec-num::after {
+  content: ".";
+}
+
+.article > h3 {
+  margin: 1.3em 0 0.4em;
+  color: var(--title);
+  font-size: 1.15rem;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Body text */
+
+p {
+  margin: 0 0 0.9em;
+}
+
+.article ul,
+.article ol:not(.reference-list) {
+  margin: 0 0 1em;
+  padding-left: 1.6em;
+}
+
+.article li + li {
+  margin-top: 0.25em;
+}
+
+sup.cite {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+/* Tables */
+
+.article table:not(.infobox) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 1em 0 1.2em;
+  border-collapse: collapse;
+  line-height: 1.5;
+}
+
+.article table:not(.infobox) th,
+.article table:not(.infobox) td {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.article table:not(.infobox) thead th {
+  background: var(--surface);
+  font-weight: bold;
+}
+
+/* Code */
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+:not(pre) > code {
+  padding: 0.05em 0.3em;
+  background: var(--surface);
+}
+
+pre {
+  overflow-x: auto;
+  margin: 1em 0 1.2em;
+  padding: 0.7rem 1rem;
+  border-left: 3px solid var(--border);
+  background: var(--surface);
+  line-height: 1.55;
+}
+
+/* Figures: the inlined SVG carries dark presentation attributes; CSS overrides them per theme. */
+
+/* The figure shrinks to the SVG's intrinsic width; the caption wraps to that width
+   (width: 0 keeps it out of the shrink-to-fit calculation). */
+
+.figure {
+  width: fit-content;
+  max-width: 100%;
+  margin: 1.4em 0;
+}
+
+.figure svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  font-family: var(--sans);
+}
+
+.figure .fig-box {
+  stroke: var(--border);
+}
+
+.figure .fig-box:not([fill="none"]) {
+  fill: var(--surface);
+}
+
+.figure .fig-accept {
+  stroke: var(--accept);
+}
+
+.figure .fig-reject {
+  stroke: var(--reject);
+}
+
+.figure .fig-text {
+  fill: var(--text);
+}
+
+.figure .fig-muted,
+.figure .fig-label {
+  fill: var(--muted);
+}
+
+.figure figcaption {
+  width: 0;
+  min-width: 100%;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* References */
+
+.reference-list {
+  margin: 0;
+  padding-left: 2em;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.reference-list li {
+  scroll-margin-top: 1rem;
+}
+
+.reference-list li + li {
+  margin-top: 0.3em;
+}
+
+.reference-list p {
+  margin: 0;
+}
+
+.backref-caret {
+  color: var(--muted);
+}
+
+/* Narrow screens: infobox stacks above the lead at full width. */
+
+@media (max-width: 860px) {
+  .infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 1.25rem;
+  }
+}
+
+@media (max-width: 760px) {
+  main {
+    padding: 1.5rem 16px 3rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .article > h2,
+  .references > h2 {
+    font-size: 1.45rem;
+  }
+}
+
+/* Narrow screens: code wraps and tables stack into labelled rows, so nothing scrolls sideways. */
+
+@media (max-width: 40em) {
+  pre {
+    overflow-x: visible;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .article table:not(.infobox),
+  .article table:not(.infobox) tbody,
+  .article table:not(.infobox) tr {
+    display: block;
+    width: auto;
+    overflow: visible;
+  }
+
+  .article table:not(.infobox) {
+    border-top: 1px solid var(--border);
+  }
+
+  .article table:not(.infobox) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .article table:not(.infobox) tr {
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Label sits in a left column; a block (not grid) keeps text and citations in one flow. */
+  .article table:not(.infobox) td {
+    display: block;
+    position: relative;
+    min-height: 1.7rem;
+    padding: 0.15rem 0 0.15rem calc(35% + 0.75rem);
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .article table:not(.infobox) td::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 0.15rem;
+    left: 0;
+    width: 35%;
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.7;
+  }
+}
+
+@media print {
+  main {
+    padding: 0;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+</style>
+</head>
+<body>
+<main>
+<article class="article">
+<header class="article-header">
+<h1 class="title">Speculative decoding</h1>
+<p class="note">A working article on speculative decoding for large language model inference. Written 2026-10-28; every source linked below was checked to resolve that day. Figures quoted from papers are the papers' own measurements.</p>
+</header>
+<div class="lead-block">
+<table class="infobox">
+<caption>Speculative decoding</caption>
+<tbody>
+<tr>
+<th scope="row">What</th>
+<td>A small drafter proposes several tokens; the large target model checks all of them in one forward pass</td>
+</tr>
+<tr>
+<th scope="row">Guarantee</th>
+<td>Lossless: the output has exactly the target model's distribution</td>
+</tr>
+<tr>
+<th scope="row">Why it pays</th>
+<td>Single-sequence decoding is memory-bandwidth bound, so scoring a few extra positions costs little more than scoring one</td>
+</tr>
+<tr>
+<th scope="row">Reported speedups</th>
+<td>2x to 3x on T5-XXL; 2x to 2.5x on Chinchilla 70B</td>
+</tr>
+<tr>
+<th scope="row">Introduced</th>
+<td>Leviathan, Kalman and Matias (2022); Chen et al. (2023)</td>
+</tr>
+<tr>
+<th scope="row">Related</th>
+<td>Blockwise parallel decoding (2018), Medusa, EAGLE</td>
+</tr>
+</tbody>
+</table>
+<div class="lead">
+<p><strong>Speculative decoding</strong> (also <strong>speculative sampling</strong>) is a technique for generating text from a large autoregressive language model several tokens at a time without changing what the model would have written. A small, fast <strong>drafter</strong> proposes the next <em>k</em> tokens; the large <strong>target</strong> model scores all of them in a single forward pass, keeps the longest prefix it agrees with under a modified <a class="wikilink missing" href="/rejection-sampling" title="Rejection sampling (article not written yet)">rejection-sampling</a> rule, and adds one token of its own. The rule provably preserves the target model's output distribution, so the speedup comes with no change in quality.<sup class="cite"><a href="#fn1" id="fnref1">[1]</a></sup><sup class="cite"><a href="#fn2" id="fnref2">[2]</a></sup> The method was introduced independently by researchers at Google and DeepMind in 2022 and 2023, building on earlier blockwise parallel decoding,<sup class="cite"><a href="#fn3" id="fnref3">[3]</a></sup> and is now built into the major open-source serving engines.<sup class="cite"><a href="#fn4" id="fnref4">[4]</a></sup><sup class="cite"><a href="#fn5" id="fnref5">[5]</a></sup></p>
+</div>
+<nav class="toc" aria-labelledby="toc-title">
+<h2 class="toc-title" id="toc-title">Contents</h2>
+<ol>
+<li><a href="#why-it-works"><span class="toc-num">1</span> <span class="toc-text">Why it works</span></a></li>
+<li><a href="#the-verification-rule"><span class="toc-num">2</span> <span class="toc-text">The verification rule</span></a>
+<ol>
+<li><a href="#why-the-output-is-exactly-p"><span class="toc-num">2.1</span> <span class="toc-text">Why the output is exactly p</span></a></li>
+<li><a href="#acceptance-rate"><span class="toc-num">2.2</span> <span class="toc-text">Acceptance rate</span></a></li>
+</ol></li>
+<li><a href="#tokens-per-step-and-choosing-k"><span class="toc-num">3</span> <span class="toc-text">Tokens per step and choosing k</span></a></li>
+<li><a href="#verification-variants"><span class="toc-num">4</span> <span class="toc-text">Verification variants</span></a></li>
+<li><a href="#drafter-families"><span class="toc-num">5</span> <span class="toc-text">Drafter families</span></a></li>
+<li><a href="#libraries-and-engines"><span class="toc-num">6</span> <span class="toc-text">Libraries and engines</span></a></li>
+<li><a href="#worked-example"><span class="toc-num">7</span> <span class="toc-text">Worked example</span></a></li>
+<li><a href="#limitations"><span class="toc-num">8</span> <span class="toc-text">Limitations</span></a></li>
+<li><a href="#glossary"><span class="toc-num">9</span> <span class="toc-text">Glossary</span></a></li>
+<li><a href="#references"><span class="toc-num">10</span> <span class="toc-text">References</span></a></li>
+</ol>
+</nav>
+</div>
+<h2 id="why-it-works"><span class="sec-num">1</span> Why it works</h2>
+<p>Generating one token from a <a class="wikilink missing" href="/transformer" title="Transformer (article not written yet)">Transformer</a> requires reading every weight of the model from accelerator memory. At batch size 1 the arithmetic per byte read is small, so the step time is set by memory bandwidth rather than compute. Feeding the model several candidate tokens in the same step reuses the same weight reads, and the extra positions are almost free until the batch becomes large enough to be compute bound.<sup class="cite"><a href="#fn2" id="fnref2:1">[2]</a></sup><sup class="cite"><a href="#fn6" id="fnref6">[6]</a></sup> Speculative decoding spends that spare compute on guesses.</p>
+<figure class="figure">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416 214" width="520" height="268" role="img" aria-labelledby="t d" font-family="system-ui, sans-serif" font-size="14">
+  <title id="t">One speculative decoding step</title>
+  <desc id="d">The drafter proposes four tokens. The target model checks all four in one pass, accepts the first two, rejects the third and samples a replacement, and the fourth draft is discarded. The step outputs three tokens.</desc>
+  <text class="fig-label" x="0" y="14" fill="#9a9a9a">Drafter proposes four tokens</text>
+  <g class="fig-row">
+    <rect class="fig-box" x="0.75" y="24" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="49.0" y="45" text-anchor="middle" fill="#ededed">the</text>
+    <rect class="fig-box" x="106.75" y="24" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="155.0" y="45" text-anchor="middle" fill="#ededed">cat</text>
+    <rect class="fig-box" x="212.75" y="24" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="261.0" y="45" text-anchor="middle" fill="#ededed">sat</text>
+    <rect class="fig-box" x="318.75" y="24" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="367.0" y="45" text-anchor="middle" fill="#ededed">on</text>
+  </g>
+  <text class="fig-label" x="0" y="88" fill="#9a9a9a">Target checks all four in one pass</text>
+  <g class="fig-row">
+    <rect class="fig-accept" x="0.75" y="98" width="96.5" height="32" rx="4" fill="none" stroke="#4dbc9b" stroke-width="1.5"/>
+    <text class="fig-text" x="49.0" y="119" text-anchor="middle" fill="#ededed">accept</text>
+    <rect class="fig-accept" x="106.75" y="98" width="96.5" height="32" rx="4" fill="none" stroke="#4dbc9b" stroke-width="1.5"/>
+    <text class="fig-text" x="155.0" y="119" text-anchor="middle" fill="#ededed">accept</text>
+    <rect class="fig-reject" x="212.75" y="98" width="96.5" height="32" rx="4" fill="none" stroke="#f98473" stroke-width="1.5"/>
+    <text class="fig-text" x="261.0" y="119" text-anchor="middle" fill="#ededed">reject</text>
+    <rect class="fig-box" x="318.75" y="98" width="96.5" height="32" rx="4" fill="none" stroke="#303030" stroke-dasharray="4 3"/>
+    <text class="fig-muted" x="367.0" y="119" text-anchor="middle" fill="#9a9a9a">discarded</text>
+  </g>
+  <text class="fig-label" x="0" y="162" fill="#9a9a9a">Output: 3 tokens from 1 target pass</text>
+  <g class="fig-row">
+    <rect class="fig-box" x="0.75" y="172" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="49.0" y="193" text-anchor="middle" fill="#ededed">the</text>
+    <rect class="fig-box" x="106.75" y="172" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="155.0" y="193" text-anchor="middle" fill="#ededed">cat</text>
+    <rect class="fig-box" x="212.75" y="172" width="96.5" height="32" rx="4" fill="#1c1c1c" stroke="#303030"/>
+    <text class="fig-text" x="261.0" y="193" text-anchor="middle" fill="#ededed">lay</text>
+  </g>
+</svg>
+<figcaption>One step with four drafted tokens. The first two match the target and are kept; the third is rejected and replaced by a token sampled from the residual distribution; the fourth is discarded because it followed a rejection.</figcaption>
+</figure>
+<p>If a guess is right, the model has produced several tokens for the price of one step. If it is wrong, the target model's own computation at the first rejected position still yields a correct token, so no step is wasted entirely.</p>
+<h2 id="the-verification-rule"><span class="sec-num">2</span> The verification rule</h2>
+<p>Let <em>q(x)</em> be the drafter's probability for a proposed token <em>x</em> and <em>p(x)</em> the target model's probability for the same token given the same prefix. Leviathan et al. and Chen et al. use the same three-part rule:<sup class="cite"><a href="#fn1" id="fnref1:1">[1]</a></sup><sup class="cite"><a href="#fn2" id="fnref2:2">[2]</a></sup></p>
+<pre><code class="language-text">1. accept the drafted token x with probability min(1, p(x) / q(x))
+2. if rejected, sample a replacement from the residual
+     p'(x) = max(0, p(x) - q(x)) / sum over y of max(0, p(y) - q(y))
+   and discard the remaining drafts
+3. if all k drafts are accepted, sample one bonus token from the target's (k+1)-th distribution
+</code></pre>
+<h3 id="why-the-output-is-exactly-p"><span class="sec-num">2.1</span> Why the output is exactly p</h3>
+<p>The probability of emitting <em>x</em> is the chance it was drafted and kept, plus the chance that some draft was rejected and <em>x</em> was drawn from the residual:</p>
+<pre><code class="language-text">P(x) = q(x) * min(1, p(x)/q(x)) + P(reject) * p'(x)
+     = min(p(x), q(x))          + max(0, p(x) - q(x))
+     = p(x)
+</code></pre>
+<p>The second line uses the fact that the rejection probability equals the normaliser of the residual. The identity holds at any sampling temperature; at temperature 0 it reduces to accepting a draft exactly when the drafter's and target's top tokens agree.</p>
+<h3 id="acceptance-rate"><span class="sec-num">2.2</span> Acceptance rate</h3>
+<p>The expected acceptance rate of a single draft is the overlap of the two distributions, the sum over <em>x</em> of min(<em>p(x)</em>, <em>q(x)</em>), which equals one minus the total variation distance between them. A drafter is useful in proportion to how closely its distribution matches the target's on the text actually being generated.<sup class="cite"><a href="#fn1" id="fnref1:2">[1]</a></sup></p>
+<h2 id="tokens-per-step-and-choosing-k"><span class="sec-num">3</span> Tokens per step and choosing k</h2>
+<p>If each draft is accepted independently with probability <em>α</em>, the expected number of tokens produced per target forward pass with <em>k</em> drafts is (1 − <em>α</em>^(<em>k</em>+1)) / (1 − <em>α</em>).<sup class="cite"><a href="#fn1" id="fnref1:3">[1]</a></sup> The gain flattens quickly: each extra draft position is only reached if every earlier one survived.</p>
+<table>
+<thead>
+<tr>
+<th>α</th>
+<th>k = 2</th>
+<th>k = 4</th>
+<th>k = 8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="α">0.6</td>
+<td data-label="k = 2">1.96</td>
+<td data-label="k = 4">2.31</td>
+<td data-label="k = 8">2.47</td>
+</tr>
+<tr>
+<td data-label="α">0.8</td>
+<td data-label="k = 2">2.44</td>
+<td data-label="k = 4">3.36</td>
+<td data-label="k = 8">4.33</td>
+</tr>
+<tr>
+<td data-label="α">0.9</td>
+<td data-label="k = 2">2.71</td>
+<td data-label="k = 4">4.10</td>
+<td data-label="k = 8">6.13</td>
+</tr>
+</tbody>
+</table>
+<p>Tokens per step is not throughput. Each draft costs a drafter call, and a longer block makes the verification pass more expensive, so the best <em>k</em> is the one that maximises tokens per unit of wall-clock time on the actual hardware. Sequoia selects the tree size and depth automatically for a given platform for this reason.<sup class="cite"><a href="#fn7" id="fnref7">[7]</a></sup></p>
+<h2 id="verification-variants"><span class="sec-num">4</span> Verification variants</h2>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Idea</th>
+<th>Lossless</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Variant">Token-wise</td>
+<td data-label="Idea">Accept or reject drafts one at a time along a single chain</td>
+<td data-label="Lossless">Yes</td>
+<td data-label="Source">Leviathan et al.;<sup class="cite"><a href="#fn1" id="fnref1:4">[1]</a></sup> Chen et al.<sup class="cite"><a href="#fn2" id="fnref2:3">[2]</a></sup></td>
+</tr>
+<tr>
+<td data-label="Variant">Block verification</td>
+<td data-label="Idea">Decide the whole block jointly; never worse than token-wise, 5% to 8% faster in wall-clock time in the paper</td>
+<td data-label="Lossless">Yes</td>
+<td data-label="Source">Sun et al.<sup class="cite"><a href="#fn8" id="fnref8">[8]</a></sup></td>
+</tr>
+<tr>
+<td data-label="Variant">Tree verification</td>
+<td data-label="Idea">Verify a tree of candidate continuations in one pass using an attention mask in which each node sees only its ancestors</td>
+<td data-label="Lossless">Yes</td>
+<td data-label="Source">SpecInfer;<sup class="cite"><a href="#fn9" id="fnref9">[9]</a></sup> Sequoia<sup class="cite"><a href="#fn7" id="fnref7:1">[7]</a></sup></td>
+</tr>
+<tr>
+<td data-label="Variant">Multi-draft</td>
+<td data-label="Idea">Several independent drafts per position, coupled by optimal transport</td>
+<td data-label="Lossless">Yes</td>
+<td data-label="Source">SpecTr<sup class="cite"><a href="#fn10" id="fnref10">[10]</a></sup></td>
+</tr>
+<tr>
+<td data-label="Variant">Typical acceptance</td>
+<td data-label="Idea">Accept drafts the target finds plausible enough rather than matching its distribution exactly</td>
+<td data-label="Lossless">No</td>
+<td data-label="Source">Medusa<sup class="cite"><a href="#fn6" id="fnref6:1">[6]</a></sup></td>
+</tr>
+</tbody>
+</table>
+<h2 id="drafter-families"><span class="sec-num">5</span> Drafter families</h2>
+<ul>
+<li><strong>Separate small model.</strong> A smaller model from the same family with the same tokenizer, as in the original papers.<sup class="cite"><a href="#fn1" id="fnref1:5">[1]</a></sup><sup class="cite"><a href="#fn2" id="fnref2:4">[2]</a></sup> Simple to deploy, but the drafter has to be served alongside the target.</li>
+<li><strong>Extra decoding heads.</strong> Medusa adds several heads to the target model, each predicting a token further ahead, and verifies their combinations with tree attention. The paper reports over 2.2x speedup with heads trained on a frozen backbone and 2.3x to 3.6x when the backbone is fine-tuned jointly.<sup class="cite"><a href="#fn6" id="fnref6:2">[6]</a></sup></li>
+<li><strong>Feature-level drafter.</strong> EAGLE drafts from the target model's second-to-top-layer features rather than from tokens, reporting 2.7x to 3.5x latency speedup on LLaMA2-Chat 70B.<sup class="cite"><a href="#fn11" id="fnref11">[11]</a></sup> EAGLE-2 adds dynamic draft trees (3.05x to 4.26x),<sup class="cite"><a href="#fn12" id="fnref12">[12]</a></sup> and EAGLE-3 moves to direct token prediction with multi-layer feature fusion, reporting up to 6.5x.<sup class="cite"><a href="#fn13" id="fnref13">[13]</a></sup></li>
+<li><strong>No drafter.</strong> Prompt lookup decoding proposes n-grams copied from the prompt, which works well for input-grounded tasks such as summarisation and code editing.<sup class="cite"><a href="#fn14" id="fnref14">[14]</a></sup> Lookahead decoding is an exact parallel decoding algorithm that needs no auxiliary model or data store, reporting up to 1.8x on MT-bench.<sup class="cite"><a href="#fn15" id="fnref15">[15]</a></sup></li>
+</ul>
+<h2 id="libraries-and-engines"><span class="sec-num">6</span> Libraries and engines</h2>
+<p>vLLM documents speculative decoding with separate draft models, n-gram matching, EAGLE and multi-token-prediction heads.<sup class="cite"><a href="#fn4" id="fnref4:1">[4]</a></sup> SGLang lists EAGLE-2, EAGLE-3, multi-token prediction, classic draft-model decoding and an n-gram variant.<sup class="cite"><a href="#fn5" id="fnref5:1">[5]</a></sup> Hugging Face Transformers exposes the technique as assisted decoding.<sup class="cite"><a href="#fn16" id="fnref16">[16]</a></sup></p>
+<h2 id="worked-example"><span class="sec-num">7</span> Worked example</h2>
+<p>A toy vocabulary of four tokens, with target and drafter distributions for the next position:</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Target p</th>
+<th>Drafter q</th>
+<th>min(p, q)</th>
+<th>max(0, p − q)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Token">A</td>
+<td data-label="Target p">0.50</td>
+<td data-label="Drafter q">0.60</td>
+<td data-label="min(p, q)">0.50</td>
+<td data-label="max(0, p − q)">0.00</td>
+</tr>
+<tr>
+<td data-label="Token">B</td>
+<td data-label="Target p">0.20</td>
+<td data-label="Drafter q">0.30</td>
+<td data-label="min(p, q)">0.20</td>
+<td data-label="max(0, p − q)">0.00</td>
+</tr>
+<tr>
+<td data-label="Token">C</td>
+<td data-label="Target p">0.20</td>
+<td data-label="Drafter q">0.05</td>
+<td data-label="min(p, q)">0.05</td>
+<td data-label="max(0, p − q)">0.15</td>
+</tr>
+<tr>
+<td data-label="Token">D</td>
+<td data-label="Target p">0.10</td>
+<td data-label="Drafter q">0.05</td>
+<td data-label="min(p, q)">0.05</td>
+<td data-label="max(0, p − q)">0.05</td>
+</tr>
+</tbody>
+</table>
+<p>The acceptance rate is the sum of the min column, 0.80. If the drafter proposes A, it is kept with probability 0.50 / 0.60 ≈ 0.83. If it proposes C, then <em>p/q</em> = 4, so C is always kept. On a rejection the replacement is drawn from the residual column normalised to (0, 0, 0.75, 0.25): the residual moves probability back onto exactly the tokens the drafter under-proposed. Summing both paths for every token returns (0.50, 0.20, 0.20, 0.10), the target distribution.</p>
+<p>With <em>α</em> = 0.8 and <em>k</em> = 4, the formula above gives (1 − 0.8^5) / 0.2 ≈ 3.36 tokens per target pass, before subtracting the cost of the drafter.</p>
+<h2 id="limitations"><span class="sec-num">8</span> Limitations</h2>
+<ul>
+<li><strong>Batch size.</strong> The free compute that drafts consume shrinks as the batch grows, so speedups are largest for single-user, latency-bound serving and smaller at high throughput. EAGLE-3 reports a 1.38x throughput gain at batch size 64 in SGLang, well below its single-sequence figure.<sup class="cite"><a href="#fn13" id="fnref13:1">[13]</a></sup></li>
+<li><strong>Drafter mismatch.</strong> Acceptance depends on how well the drafter matches the target on the actual traffic; a drafter trained on different data can cost more than it saves.</li>
+<li><strong>Lossy variants.</strong> Relaxed acceptance rules such as typical acceptance trade the exact-distribution guarantee for more accepted tokens.<sup class="cite"><a href="#fn6" id="fnref6:3">[6]</a></sup></li>
+</ul>
+<h2 id="glossary"><span class="sec-num">9</span> Glossary</h2>
+<ul>
+<li><strong>Target model</strong>: the large model whose output distribution must be preserved.</li>
+<li><strong>Drafter</strong>: the cheap proposer of candidate tokens; a small model, extra heads, or a lookup rule.</li>
+<li><strong>Acceptance rate (α)</strong>: the probability that a drafted token survives verification.</li>
+<li><strong>Residual distribution</strong>: the normalised positive part of <em>p − q</em>, sampled after a rejection.</li>
+<li><strong>Bonus token</strong>: the extra token sampled from the target when every draft in a block is accepted.</li>
+<li><strong>Token tree</strong>: several candidate continuations sharing prefixes, verified together with a tree attention mask.</li>
+</ul>
+<section class="references" aria-labelledby="references">
+<h2 id="references"><span class="sec-num">10</span> References</h2>
+<ol class="reference-list">
+<li id="fn1"><p>Yaniv Leviathan, Matan Kalman, Yossi Matias. &quot;Fast Inference from Transformers via Speculative Decoding.&quot; ICML 2023. arXiv:2211.17192. <a href="https://arxiv.org/abs/2211.17192">https://arxiv.org/abs/2211.17192</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref1" aria-label="Back to citation 1">a</a> <a class="backref" href="#fnref1:1" aria-label="Back to citation 1">b</a> <a class="backref" href="#fnref1:2" aria-label="Back to citation 1">c</a> <a class="backref" href="#fnref1:3" aria-label="Back to citation 1">d</a> <a class="backref" href="#fnref1:4" aria-label="Back to citation 1">e</a> <a class="backref" href="#fnref1:5" aria-label="Back to citation 1">f</a></p>
+</li>
+<li id="fn2"><p>Charlie Chen, Sebastian Borgeaud, Geoffrey Irving, et al. &quot;Accelerating Large Language Model Decoding with Speculative Sampling.&quot; 2023. arXiv:2302.01318. <a href="https://arxiv.org/abs/2302.01318">https://arxiv.org/abs/2302.01318</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref2" aria-label="Back to citation 2">a</a> <a class="backref" href="#fnref2:1" aria-label="Back to citation 2">b</a> <a class="backref" href="#fnref2:2" aria-label="Back to citation 2">c</a> <a class="backref" href="#fnref2:3" aria-label="Back to citation 2">d</a> <a class="backref" href="#fnref2:4" aria-label="Back to citation 2">e</a></p>
+</li>
+<li id="fn3"><p>Mitchell Stern, Noam Shazeer, Jakob Uszkoreit. &quot;Blockwise Parallel Decoding for Deep Autoregressive Models.&quot; NeurIPS 2018. arXiv:1811.03115. <a href="https://arxiv.org/abs/1811.03115">https://arxiv.org/abs/1811.03115</a> <a class="backref" href="#fnref3" aria-label="Back to citation 3">^</a></p>
+</li>
+<li id="fn4"><p>vLLM project. &quot;Speculative Decoding.&quot; vLLM documentation. <a href="https://docs.vllm.ai/en/latest/features/speculative_decoding/">https://docs.vllm.ai/en/latest/features/speculative_decoding/</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref4" aria-label="Back to citation 4">a</a> <a class="backref" href="#fnref4:1" aria-label="Back to citation 4">b</a></p>
+</li>
+<li id="fn5"><p>SGLang project. &quot;Speculative Decoding.&quot; SGLang documentation. <a href="https://docs.sglang.ai/advanced_features/speculative_decoding.html">https://docs.sglang.ai/advanced_features/speculative_decoding.html</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref5" aria-label="Back to citation 5">a</a> <a class="backref" href="#fnref5:1" aria-label="Back to citation 5">b</a></p>
+</li>
+<li id="fn6"><p>Tianle Cai, Yuhong Li, Zhengyang Geng, et al. &quot;Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads.&quot; 2024. arXiv:2401.10774. <a href="https://arxiv.org/abs/2401.10774">https://arxiv.org/abs/2401.10774</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref6" aria-label="Back to citation 6">a</a> <a class="backref" href="#fnref6:1" aria-label="Back to citation 6">b</a> <a class="backref" href="#fnref6:2" aria-label="Back to citation 6">c</a> <a class="backref" href="#fnref6:3" aria-label="Back to citation 6">d</a></p>
+</li>
+<li id="fn7"><p>Zhuoming Chen, Avner May, Ruslan Svirschevski, et al. &quot;Sequoia: Scalable, Robust, and Hardware-aware Speculative Decoding.&quot; 2024. arXiv:2402.12374. <a href="https://arxiv.org/abs/2402.12374">https://arxiv.org/abs/2402.12374</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref7" aria-label="Back to citation 7">a</a> <a class="backref" href="#fnref7:1" aria-label="Back to citation 7">b</a></p>
+</li>
+<li id="fn8"><p>Ziteng Sun, Uri Mendlovic, Yaniv Leviathan, et al. &quot;Block Verification Accelerates Speculative Decoding.&quot; 2024. arXiv:2403.10444. <a href="https://arxiv.org/abs/2403.10444">https://arxiv.org/abs/2403.10444</a> <a class="backref" href="#fnref8" aria-label="Back to citation 8">^</a></p>
+</li>
+<li id="fn9"><p>Xupeng Miao, Gabriele Oliaro, Zhihao Zhang, et al. &quot;SpecInfer: Accelerating Generative Large Language Model Serving with Tree-based Speculative Inference and Verification.&quot; 2023. arXiv:2305.09781. <a href="https://arxiv.org/abs/2305.09781">https://arxiv.org/abs/2305.09781</a> <a class="backref" href="#fnref9" aria-label="Back to citation 9">^</a></p>
+</li>
+<li id="fn10"><p>Ziteng Sun, Ananda Theertha Suresh, Jae Hun Ro, et al. &quot;SpecTr: Fast Speculative Decoding via Optimal Transport.&quot; NeurIPS 2023. arXiv:2310.15141. <a href="https://arxiv.org/abs/2310.15141">https://arxiv.org/abs/2310.15141</a> <a class="backref" href="#fnref10" aria-label="Back to citation 10">^</a></p>
+</li>
+<li id="fn11"><p>Yuhui Li, Fangyun Wei, Chao Zhang, Hongyang Zhang. &quot;EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty.&quot; 2024. arXiv:2401.15077. <a href="https://arxiv.org/abs/2401.15077">https://arxiv.org/abs/2401.15077</a> <a class="backref" href="#fnref11" aria-label="Back to citation 11">^</a></p>
+</li>
+<li id="fn12"><p>Yuhui Li, Fangyun Wei, Chao Zhang, Hongyang Zhang. &quot;EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees.&quot; 2024. arXiv:2406.16858. <a href="https://arxiv.org/abs/2406.16858">https://arxiv.org/abs/2406.16858</a> <a class="backref" href="#fnref12" aria-label="Back to citation 12">^</a></p>
+</li>
+<li id="fn13"><p>Yuhui Li, Fangyun Wei, Chao Zhang, Hongyang Zhang. &quot;EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test.&quot; 2025. arXiv:2503.01840. <a href="https://arxiv.org/abs/2503.01840">https://arxiv.org/abs/2503.01840</a> <span class="backref-caret">^</span> <a class="backref" href="#fnref13" aria-label="Back to citation 13">a</a> <a class="backref" href="#fnref13:1" aria-label="Back to citation 13">b</a></p>
+</li>
+<li id="fn14"><p>Apoorv Saxena. &quot;Prompt Lookup Decoding.&quot; GitHub repository, 2023. <a href="https://github.com/apoorvumang/prompt-lookup-decoding">https://github.com/apoorvumang/prompt-lookup-decoding</a> <a class="backref" href="#fnref14" aria-label="Back to citation 14">^</a></p>
+</li>
+<li id="fn15"><p>Yichao Fu, Peter Bailis, Ion Stoica, Hao Zhang. &quot;Break the Sequential Dependency of LLM Inference Using Lookahead Decoding.&quot; 2024. arXiv:2402.02057. <a href="https://arxiv.org/abs/2402.02057">https://arxiv.org/abs/2402.02057</a> <a class="backref" href="#fnref15" aria-label="Back to citation 15">^</a></p>
+</li>
+<li id="fn16"><p>Hugging Face. &quot;Assisted decoding.&quot; Transformers documentation. <a href="https://huggingface.co/docs/transformers/main/en/assisted_decoding">https://huggingface.co/docs/transformers/main/en/assisted_decoding</a> <a class="backref" href="#fnref16" aria-label="Back to citation 16">^</a></p>
+</li>
+</ol>
+</section>
+
+</article>
+</main>
+</body>
+</html>
