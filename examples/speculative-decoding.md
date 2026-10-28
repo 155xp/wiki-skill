@@ -5,12 +5,12 @@ mode: explainer
 visibility: private
 description: "How speculative decoding speeds up large language model inference without changing the output. Sources checked 2026-10-28."
 infobox:
-  What it is: "A way to make a large language model generate text faster with no change to its output"
-  How: "A small model drafts several tokens; the large model checks them all in one pass"
-  Guarantee: "Same output distribution as the large model alone"
-  Typical speedup: "2x to 3x for single-sequence decoding"
-  Introduced: "Leviathan, Kalman and Matias (2022); Chen et al. (2023)"
-  Supported in: "vLLM, SGLang, Hugging Face Transformers"
+  - "What it is: A way to make a large language model generate text faster with no change to its output"
+  - "How: A small model drafts several tokens; the large model checks them all in one pass"
+  - "Guarantee: Same output distribution as the large model alone"
+  - "Typical speedup: 2x to 3x for single-sequence decoding"
+  - "Introduced: Leviathan, Kalman and Matias (2022); Chen et al. (2023)"
+  - "Supported in: vLLM, SGLang, Hugging Face Transformers"
 aliases: [Speculative decoding, Speculative sampling]
 tags: [llm-inference, decoding]
 created: 2026-10-28

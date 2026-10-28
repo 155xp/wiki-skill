@@ -12,4 +12,4 @@ Copy the note and its `figures/` into a vault and open it in reading view.
 Start `Xvfb :43 -screen 0 1440x1000x24` and record its PID, launch the Obsidian AppImage with `DISPLAY=:43` and a vault whose `.obsidian/workspace.json` opens the note in preview, then capture with `import -window root` and scroll with `xdotool click 5`. Kill Obsidian and Xvfb by their PIDs.
 
 ## Gotchas
-Obsidian shows the nested `infobox` map as raw JSON in the properties panel. The list form (`- "Label: value"`) displays as a list.
+The examples write `infobox` as a list of `"Label: value"` strings, which the properties panel shows as a clean list (see `docs/screenshots/obsidian-*-top.png`). A nested map would show as raw JSON there, so SKILL.md tells agents to use the list form.

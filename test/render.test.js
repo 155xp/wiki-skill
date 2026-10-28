@@ -305,3 +305,16 @@ test('See also drops entries with no page behind them, and hides the section whe
   const body = renderArticle('Lead.\n\n## Body\n\n- Compare [[Ghost page]].\n', { known });
   assert.match(body, /<li>Compare Ghost page\.<\/li>/);
 });
+
+test('infobox as a list of "Label: value" strings: rows in order, empty values hidden; the examples use it so Obsidian shows a clean list property', () => {
+  const out = renderArticle('---\ntitle: T\ninfobox:\n  - "First: one"\n  - "Released:"\n  - "Ratio: 2:1 at best"\n---\nLead.\n', { known: new Set() });
+  const box = out.match(/<table class="infobox"[\s\S]*?<\/table>/)[0];
+  const labels = [...box.matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+  assert.deepEqual(labels, ['First', 'Ratio']);
+  assert.match(box, /2:1 at best/);
+  const matter = require('gray-matter');
+  for (const f of ['speculative-decoding.md', 'speculative-decoding-study-guide.md']) {
+    const data = matter(fs.readFileSync(path.join(__dirname, '..', 'examples', f), 'utf8')).data;
+    assert.ok(Array.isArray(data.infobox) && data.infobox.every((r) => typeof r === 'string'), `${f} infobox is a list of strings`);
+  }
+});

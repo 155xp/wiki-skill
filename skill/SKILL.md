@@ -14,7 +14,7 @@ Work through this before and after writing. Each item is expanded further down.
 3. **Sources first.** Read the real repos, files, papers and docs before writing. Cite every claim that is not common knowledge to a source you opened. Never invent a fact, number, URL, author or quote; if a fact is not in your sources, leave it out.
 4. **Style.** No emojis. No em dashes (use a comma, colon, parentheses or a new sentence). No eyebrow labels above headings. No 01/02/03 numbering; the renderer's Contents numbering (1, 1.1, 2) is the only numbering. No icons.
 5. **Quality bar.** A plain-language lead a newcomer understands on first read, intuition before definitions or formalism, and at least one fully worked walk-through with concrete values.
-6. **Components.** When the content is structurally a comparison, use the component for it rather than prose (see Components).
+6. **Components.** When the content is structurally a tree, a flow or a comparison, use the component for it rather than prose (see Components).
 7. **Publish.** Frontmatter has `title`, `slug`, `mode` and `visibility`; the render runs with no warnings; then follow Publishing exactly.
 
 The output is one Markdown file. It must read cleanly as a plain note in Obsidian or any Markdown viewer, and it must render to a full article page with `node renderer/render.js article.md > article.html`. The Markdown file is the source of truth; never edit the generated HTML.
@@ -144,7 +144,7 @@ A `## See also` section is a plain list of `[[wikilinks]]`, one per entry, optio
 
 Renderer components and when to use each. More components and their syntax will be documented here (wiki#6); until then the available ones are wikilinks, figures, tables, footnotes, highlights, callouts, and the study-mode blocks above.
 
-- Use a component whenever the content is structurally a comparison (a table, or a wrong/right pair in study mode), a flow (a figure), or a set of steps (a numbered list), instead of describing the structure in prose.
+- Use a component whenever the content is structurally a tree (a nested list: file trees, taxonomies, decision trees), a flow (a figure), a comparison (a table, or a wrong/right pair in study mode), or a set of steps (a numbered list), instead of describing the structure in prose.
 
 ## Publishing
 
@@ -173,10 +173,10 @@ mode: explainer
 visibility: private
 description: "One muted line shown under the title: scope, date written, and any caveat."
 infobox:
-  What it is: A way to make a large language model generate text faster with no change to its output
-  How: A small model drafts several tokens; the large model checks them all in one pass
-  Typical speedup: 2x to 3x for single-sequence decoding
-  Introduced: "Leviathan, Kalman and Matias (2022)"
+  - "What it is: A way to make a large language model generate text faster with no change to its output"
+  - "How: A small model drafts several tokens; the large model checks them all in one pass"
+  - "Typical speedup: 2x to 3x for single-sequence decoding"
+  - "Introduced: Leviathan, Kalman and Matias (2022)"
 image: figures/diagram.svg
 caption: "Optional infobox image caption"
 tags: [llm-inference]
@@ -187,7 +187,7 @@ created: 2026-10-28
 - `aliases`: always include the title, so `[[Title]]` links resolve in Obsidian to the slug-named file; add other names people search for.
 - `mode`: `explainer` (default) or `study`. Any other value falls back to explainer with a warning. It never shows on the page.
 - `visibility`: `private` (default for articles an agent writes) or `public` (only when the owner says so). Used by the publishing site; see Publishing.
-- `infobox`: four to eight short rows. In an explainer, hard facts (what it is, how, key numbers, introduced by, where it is supported); in study mode, the quick-reference card. Keep values short and plain text (Obsidian shows frontmatter as properties); no long formulas that would be cramped or cut off at phone width. Quote a value that contains a colon. Rows with an empty value are skipped. A list of `"Label: value"` strings also works, and `infobox_caption` overrides the caption, which defaults to the title.
+- `infobox`: four to eight short rows. In an explainer, hard facts (what it is, how, key numbers, introduced by, where it is supported); in study mode, the quick-reference card. Keep values short and plain text (Obsidian shows frontmatter as properties); no long formulas that would be cramped or cut off at phone width. Write it as a list of quoted `"Label: value"` strings, one per row, in display order; the label ends at the first colon. Obsidian's properties panel cannot show a nested map (it shows one as raw JSON), but it shows a list cleanly. A nested `Label: value` map still renders the same rows. A row with an empty value (`"Released:"`) is skipped. `infobox_caption` overrides the caption, which defaults to the title.
 - `image` and `caption` are optional and show as the first infobox row.
 
 ## Checklist before finishing

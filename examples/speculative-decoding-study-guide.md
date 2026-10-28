@@ -6,12 +6,12 @@ mode: study
 visibility: private
 description: "Study-mode article for a course or interview on LLM inference. For the plain explanation see the explainer. Sources checked 2026-10-28."
 infobox:
-  The idea: "A small model guesses the next few tokens; the big model checks all the guesses in one step"
-  Memory phrase: "Draft cheap, verify once, keep the agreeing prefix"
-  Use it when: "One user is waiting on a big model and the GPU is idle between memory reads"
-  Tiny example: "Draft *on the mat*; the big model agrees with *on the*, writes *sofa* itself: 3 tokens for one big step"
-  Guarantee: "Same output distribution as the big model alone"
-  Typical speedup: "2x to 3x for single-sequence decoding"
+  - "The idea: A small model guesses the next few tokens; the big model checks all the guesses in one step"
+  - "Memory phrase: Draft cheap, verify once, keep the agreeing prefix"
+  - "Use it when: One user is waiting on a big model and the GPU is idle between memory reads"
+  - "Tiny example: Draft *on the mat*; the big model agrees with *on the*, writes *sofa* itself: 3 tokens for one big step"
+  - "Guarantee: Same output distribution as the big model alone"
+  - "Typical speedup: 2x to 3x for single-sequence decoding"
 tags: [llm-inference, decoding, learning]
 created: 2026-10-28
 ---
