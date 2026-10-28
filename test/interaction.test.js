@@ -215,3 +215,52 @@ test('touch: tapping a citation jumps to the reference without a preview', async
   assert.equal(await visible(page), false);
   await ctx.close();
 });
+
+test('Back returns from an anchor jump: the hash and scroll position come back', async () => {
+  const { ctx, page } = await open();
+  const link = page.locator('.toc a').nth(3);
+  const y0 = await page.evaluate(() => window.scrollY);
+  await link.click();
+  const y1 = await page.evaluate(() => window.scrollY);
+  assert.ok(y1 > y0, 'jumped down');
+  await page.goBack();
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => location.hash), '');
+  assert.equal(await page.evaluate(() => window.scrollY), y0, 'Back restores the scroll position');
+  await ctx.close();
+});
+
+test('link hover underline lives only under @media (hover: hover)', async () => {
+  const { ctx, page } = await open();
+  const rules = await page.evaluate(() => {
+    const out = [];
+    const walk = (list, media) => {
+      for (const r of list) {
+        if (r.cssRules && r.media) walk(r.cssRules, r.media.mediaText);
+        else if (r.selectorText && /:hover/.test(r.selectorText) && /\ba\b|wikilink|cite/.test(r.selectorText) && /text-decoration/.test(r.cssText)) out.push({ sel: r.selectorText, media });
+      }
+    };
+    for (const s of document.styleSheets) walk(s.cssRules, '');
+    return out;
+  });
+  assert.ok(rules.length > 0, 'there is a hover underline rule');
+  for (const r of rules) assert.match(r.media, /hover:\s*hover/, `${r.sel} is gated by (hover: hover)`);
+  await ctx.close();
+});
+
+test('transitions are interruptible: leaving mid-enter reverses the popover at once', async () => {
+  const { ctx, page } = await open();
+  const cite = page.locator('sup.cite a').first();
+  await cite.scrollIntoViewIfNeeded();
+  await cite.hover();
+  await page.waitForTimeout(760); // 700ms delay, then about 60ms into the 125ms enter
+  const mid = await page.evaluate(() => Number(getComputedStyle(document.querySelector('.fn-preview')).opacity));
+  assert.ok(mid > 0 && mid < 1, `caught mid-enter (opacity ${mid})`);
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(40);
+  const after = await page.evaluate(() => Number(getComputedStyle(document.querySelector('.fn-preview')).opacity));
+  assert.ok(after < 1, `did not finish entering after leaving (opacity ${after})`);
+  await page.waitForTimeout(200);
+  assert.equal(await visible(page), false, 'closed within the exit time');
+  await ctx.close();
+});

@@ -41,6 +41,15 @@ fs.writeFileSync(base + '.html', html);
     wikilinks: [...document.querySelectorAll('a.wikilink')].map((a) => a.getAttribute('href')),
     missingLinkElements: document.querySelectorAll('.wikilink.missing').length,
     footnoteMarkers: document.querySelectorAll('sup a[href^="#fn"]').length,
+    hasContents: !!document.querySelector('nav.toc'),
+    tocTexts: [...document.querySelectorAll('nav.toc a')].map((a) => a.textContent.trim()),
+    hasReferences: [...document.querySelectorAll('article h2')].some((h) => h.textContent.trim() === 'References'),
+    hasSeeAlso: [...document.querySelectorAll('article h2')].some((h) => h.textContent.trim() === 'See also'),
+    infoboxRows: document.querySelectorAll('table.infobox tr th + td').length,
+    emptyInfoboxRows: [...document.querySelectorAll('table.infobox tr td')].filter((td) => !td.textContent.trim() || /^[\u2014-]$/.test(td.textContent.trim())).length,
+    hasInfobox: !!document.querySelector('table.infobox'),
+    figures: document.querySelectorAll('article figure').length,
+    brokenImages: [...document.images].filter((i) => i.complete && i.naturalWidth === 0).length,
   }));
   report.rendererWarnings = warnings;
   await page.screenshot({ path: base + '.png', fullPage: true });
@@ -49,7 +58,7 @@ fs.writeFileSync(base + '.html', html);
     await m.scrollIntoViewIfNeeded();
     await m.hover();
     await page.waitForTimeout(900);
-    report.popoverVisible = await page.evaluate(() => [...document.querySelectorAll('[role="tooltip"], .fn-popover, .popover')].some((e) => e.getBoundingClientRect().height > 0 && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).opacity !== '0'));
+    report.popoverVisible = await page.evaluate(() => !!document.querySelector('.fn-preview[data-open]'));
     await page.screenshot({ path: base + '-popover.png' });
   }
   if (flag('jump') && report.footnoteMarkers) {
@@ -63,6 +72,14 @@ fs.writeFileSync(base + '.html', html);
   fs.writeFileSync(base + '.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
   await browser.close();
-  const failed = report.rendererWarnings || report.overflowX > 0 || report.missingLinkElements > 0 || report.popoverVisible === false;
+  // --expect '{"hasContents":false}' asserts report fields; --allow-warning <regex> accepts expected renderer warnings
+  const expect = JSON.parse(opt('expect', '{}'));
+  const allow = opt('allow-warning');
+  const badWarnings = warnings.split('\n').filter((l) => l && !(allow && new RegExp(allow).test(l)));
+  const mismatches = Object.entries(expect).filter(([k, v]) => JSON.stringify(report[k]) !== JSON.stringify(v)).map(([k, v]) => `${k}: expected ${JSON.stringify(v)}, got ${JSON.stringify(report[k])}`);
+  if (allow && !warnings) mismatches.push('expected a renderer warning matching ' + allow);
+  mismatches.forEach((m) => console.error('FAIL ' + m));
+  badWarnings.forEach((w) => console.error('FAIL renderer warning: ' + w));
+  const failed = badWarnings.length || mismatches.length || report.overflowX > 0 || report.missingLinkElements > 0 || report.brokenImages > 0 || report.emptyInfoboxRows > 0 || report.popoverVisible === false;
   process.exit(failed ? 1 : 0);
 })();

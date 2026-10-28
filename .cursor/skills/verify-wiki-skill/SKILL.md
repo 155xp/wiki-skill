@@ -38,9 +38,19 @@ node .cursor/skills/verify-wiki-skill/drive.js <note.md> [--width 1440|390] [--s
 - `--jump` clicks the first footnote marker and records `location.hash` and `scrollY`.
 - `--reduce` sets `prefers-reduced-motion: reduce`.
 
-It exits 1 on a renderer warning, horizontal overflow, any `.wikilink.missing` element, or a popover that did not open. Stable handles: `article.article[data-mode]`, `nav.toc a`, `a.wikilink`, `sup a[href^="#fn"]`, `.fn-preview[data-open]`, `.jump-flash`, `table.infobox`, `#fnN .ref-text`.
+It exits 1 on a renderer warning, horizontal overflow, any `.wikilink.missing` element, a broken image, an empty infobox row, or a popover that did not open. `--expect '{"hasContents":false}'` asserts fields of the JSON report (`hasContents`, `tocTexts`, `hasReferences`, `hasSeeAlso`, `hasInfobox`, `emptyInfoboxRows`, `brokenImages`, `mode` and the rest), and `--allow-warning <regex>` accepts a renderer warning the fixture is meant to produce (and fails if it is absent).
 
-Fixtures live in `test/fixtures/verify/` (one per edge case: broken links and See also pruning, empty infobox field, missing image, no footnotes, no headings, no infobox, full, explainer). The feature map in `features/` lists the journeys.
+To drive every fixture at 1440 and 390 in light and dark with its own rules:
+
+```
+bash .cursor/skills/verify-wiki-skill/run-all.sh [out-dir]
+```
+
+It prints one PASS or FAIL line per run and exits non-zero on any FAIL. The last full run is saved in `docs/verify/run-all.txt`.
+
+Stable handles: `article.article[data-mode]`, `nav.toc a`, `a.wikilink`, `sup a[href^="#fn"]`, `.fn-preview[data-open]`, `.jump-flash`, `table.infobox`, `#fnN .ref-text`.
+
+Fixtures live in `test/fixtures/verify/` (one per edge case: broken links and See also pruning, a See also where every target is missing, empty infobox field, missing image, no footnotes, no headings, no infobox, full, explainer). The feature map in `features/` lists the journeys.
 
 The full automated suite is `npm test` (node:test: render, design and interaction tests in Playwright). Screenshot sets: `node scripts/screenshots.js`, `node scripts/crops.js`, `python3 scripts/compare.py <frames-dir>`. Motion at 60fps: `scripts/motion/` (needs Xvfb and ffmpeg; see `docs/motion/README.md`).
 
