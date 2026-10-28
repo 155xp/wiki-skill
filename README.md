@@ -54,7 +54,7 @@ tags: [llm-inference]
 | Markdown | Page |
 |---|---|
 | `title`, `note` frontmatter | Serif title with a hairline, muted note line |
-| `infobox` frontmatter (list of `"Label: value"` or a map) | Infobox floated beside the lead |
+| `infobox` frontmatter (list of `"Label: value"` or a map) | Infobox floated beside the lead; empty values hide their row |
 | Text before the first `##` | Lead |
 | `##` and `###` headings | Numbered sections and a numbered Contents box |
 | `[^label]` footnotes | Bracketed citations and a numbered References section with back links |
@@ -63,7 +63,7 @@ tags: [llm-inference]
 | Tables | Bordered tables; below 40em each row stacks with its column headers as labels |
 | `## Glossary` list | Rendered as ordinary Markdown |
 
-The output is a single HTML file with inline CSS and no external requests.
+The output is a single HTML file with inline CSS and no external requests. A footnote cited without a definition stays plain text, and a definition that is never cited is dropped; both print a warning on stderr.
 
 ## License
 

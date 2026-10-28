@@ -207,6 +207,21 @@ function infoboxRows(data) {
   return Object.entries(raw);
 }
 
+function present(v) {
+  return v !== undefined && v !== null && String(v).trim() !== '';
+}
+
+// Lists footnotes cited without a definition and definitions never cited.
+function footnoteWarnings(content) {
+  const text = content.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
+  const defined = new Set([...text.matchAll(/^\[\^([^\]\s]+)\]:/gm)].map((m) => m[1]));
+  const cited = new Set([...text.matchAll(/\[\^([^\]\s]+)\](?!:)/g)].map((m) => m[1]));
+  const out = [];
+  for (const id of cited) if (!defined.has(id)) out.push(`footnote [^${id}] is cited but has no definition; left as plain text`);
+  for (const id of defined) if (!cited.has(id)) out.push(`footnote [^${id}] is defined but never cited; dropped`);
+  return out;
+}
+
 function renderArticle(source, opts = {}) {
   const { data, content } = matter(source);
   const known = opts.known || knownSlugs(opts.articlesDir);
@@ -217,6 +232,9 @@ function renderArticle(source, opts = {}) {
   referencesRules(md);
   tableLabels(md);
   inlineFigures(md, opts.baseDir || opts.articlesDir);
+
+  const warn = opts.onWarn || (() => {});
+  footnoteWarnings(content).forEach((w) => warn(w));
 
   const env = {};
   const tokens = md.parse(content, env);
@@ -231,7 +249,7 @@ function renderArticle(source, opts = {}) {
   const restHtml = split < 0 ? '' : bodyHtml.slice(split);
 
   const title = data.title || 'Untitled';
-  const rows = infoboxRows(data);
+  const rows = infoboxRows(data).filter(([, v]) => present(v));
   const inline = (s) => md.renderInline(String(s ?? ''), {});
   const infobox = rows.length
     ? `<table class="infobox">\n<caption>${escapeHtml(data.infobox_caption || title)}</caption>\n<tbody>\n${rows
@@ -298,5 +316,9 @@ if (require.main === module) {
   }
   const ai = args.indexOf('--articles');
   const articlesDir = ai >= 0 ? args[ai + 1] : path.dirname(path.resolve(file));
-  process.stdout.write(renderArticle(fs.readFileSync(file, 'utf8'), { articlesDir, baseDir: path.dirname(path.resolve(file)) }));
+  process.stdout.write(renderArticle(fs.readFileSync(file, 'utf8'), {
+    articlesDir,
+    baseDir: path.dirname(path.resolve(file)),
+    onWarn: (w) => process.stderr.write(`warning: ${w}\n`),
+  }));
 }

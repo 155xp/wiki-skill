@@ -114,3 +114,25 @@ test('table cells carry their column header as data-label for narrow layouts', (
   assert.match(t, /<td data-label="Name">a<\/td>/);
   assert.match(t, /<td data-label="Value"><strong>1<\/strong><\/td>/);
 });
+
+test('infobox hides rows whose value is missing, null or empty, and drops the box when no rows remain', () => {
+  const out = renderArticle('---\ntitle: T\ninfobox:\n  Kept: one\n  Blank: ""\n  Nothing:\n---\nLead.\n', { known: new Set() });
+  assert.match(out, /<th scope="row">Kept<\/th>/);
+  assert.doesNotMatch(out, /Blank|Nothing/);
+  const none = renderArticle('---\ntitle: T\ninfobox:\n  Blank: ""\n---\nLead.\n', { known: new Set() });
+  assert.doesNotMatch(none, /class="infobox"/);
+});
+
+test('uncited and undefined footnotes are dropped or left plain, each with a renderer warning', () => {
+  const warnings = [];
+  const out = renderArticle('---\ntitle: T\n---\nLead[^u].\n\n[^d]: defined only\n', {
+    known: new Set(),
+    onWarn: (w) => warnings.push(w),
+  });
+  assert.doesNotMatch(out, /defined only/);
+  assert.doesNotMatch(out, /id="references"/);
+  assert.match(out, /Lead\[\^u\]\./);
+  assert.equal(warnings.length, 2);
+  assert.ok(warnings.some((w) => /\[\^u\]/.test(w) && /no definition/.test(w)));
+  assert.ok(warnings.some((w) => /\[\^d\]/.test(w) && /never cited/.test(w)));
+});
