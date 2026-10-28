@@ -1,0 +1,20 @@
+{
+  "name": "wiki-skill",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A writing skill and a Markdown renderer for Wikipedia-style working articles.",
+  "license": "MIT",
+  "bin": { "wiki-render": "renderer/render.js" },
+  "scripts": {
+    "test": "node --test test/",
+    "render:example": "node renderer/render.js examples/speculative-decoding.md > docs/speculative-decoding.html"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^14.3.3",
+    "markdown-it-footnote": "^4.0.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}
